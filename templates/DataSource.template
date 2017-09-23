@@ -985,7 +985,8 @@
         }
     },
     "Outputs": {
-	"EMRMasterSGID": {
+        "EMRMasterSGID": {
+            "Condition": "CreateEmrCondition",
             "Value": {
                 "Fn::GetAtt": [
                     "EMRMasterSG",
@@ -999,6 +1000,7 @@
             }
         },
 		"EMRSlaveSGID": {
+            "Condition": "CreateEmrCondition",
             "Value": {
                 "Fn::GetAtt": [
                     "EMRSlaveSG",
