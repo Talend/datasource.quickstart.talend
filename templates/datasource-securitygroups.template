@@ -1,0 +1,510 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Provide standard Talend Security Groups and QuickstartS3URL",
+    "Parameters": {
+        "VpcId": {
+            "Description": "VPC to which security groups belong",
+            "Type": "String"
+        },
+        "RedshiftPort": {
+            "Description": "RedShift Port",
+            "Type": "String",
+            "Default": "5439"
+        },
+        "RemoteAccessCIDR": {
+            "Description": "The IP address range that can be used to access the DataSources.",
+            "Type": "String",
+            "MinLength": "9",
+            "MaxLength": "18",
+            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+            "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+        },
+		"BastionSecurityGroup": {
+            "Description": "Bastion Server Security Group.",
+            "Type": "String",
+            "Default": ""
+		},
+		"StudioSecurityGroup": {
+            "Description": "Talend Studio Security Group.",
+            "Type": "String",
+            "Default": ""
+		},
+		"JobserverSecurityGroup": {
+            "Description": "Talend Jobserver Security Group.",
+            "Type": "String",
+            "Default": ""
+		},
+        "CreateRedshift": {
+            "Description": "Create Redshift.",
+            "Type": "String",
+            "Default": "false",
+            "AllowedValues": [
+                "true",
+                "false"
+            ]
+        },
+        "CreateEmr": {
+            "Description": "Create EMR.",
+            "Type": "String",
+            "Default": "false",
+            "AllowedValues": [
+                "true",
+                "false"
+            ]
+        }
+    },
+    "Mappings": {
+    },
+    "Conditions": {
+        "BastionSecurityGroupCondition": {
+            "Fn::Not": [
+                { "Fn::Equals": [ "", { "Ref": "BastionSecurityGroup" } ] }
+            ]
+        },
+        "JobserverSecurityGroupCondition": {
+            "Fn::Not": [
+                { "Fn::Equals": [ "", { "Ref": "JobserverSecurityGroup" } ] }
+            ]
+        },
+        "StudioSecurityGroupCondition": {
+            "Fn::Not": [
+                { "Fn::Equals": [ "", { "Ref": "StudioSecurityGroup" } ] }
+            ]
+        },
+        "CreateRedshiftCondition": {
+            "Fn::Equals": [
+                { "Ref": "CreateRedshift" },
+                "true"
+            ]
+        },
+        "CreateEmrCondition": {
+            "Fn::Equals": [
+                { "Ref": "CreateEmr" },
+                "true"
+            ]
+        }
+    },
+    "Resources": {
+        "RedshiftSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "VpcId": { "Ref": "VpcId" },
+                "GroupDescription": "Allow access to Redshift from Studio, Bastion, and external CIDR on RedshiftPort (5439).",
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": { "Ref": "RedshiftPort" },
+                        "ToPort": { "Ref": "RedshiftPort" },
+                        "CidrIp": {
+                            "Ref": "RemoteAccessCIDR"
+                        }
+                    }
+                ]
+            }
+        },
+        "RedshiftSecurityGroupIngress": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Properties": {
+                "GroupId": {
+                    "Ref": "RedshiftSecurityGroup"
+                },
+                "IpProtocol": "tcp",
+                "FromPort": "0",
+                "ToPort": "65535",
+                "SourceSecurityGroupId": {
+                    "Ref": "RedshiftSecurityGroup"
+                }
+            }
+        },
+        "RedshiftSecurityGroupBastionIngress": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Condition": "BastionSecurityGroupCondition",
+            "Properties": {
+                "GroupId": {
+                    "Ref": "RedshiftSecurityGroup"
+                },
+                "IpProtocol": "tcp",
+                "FromPort": { "Ref": "RedshiftPort" },
+                "ToPort": { "Ref": "RedshiftPort" },
+                "SourceSecurityGroupId": {
+                    "Ref": "BastionSecurityGroup"
+                }
+            }
+        },
+        "RedshiftSecurityGroupStudioIngress": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Condition": "StudioSecurityGroupCondition",
+            "Properties": {
+                "GroupId": {
+                    "Ref": "RedshiftSecurityGroup"
+                },
+                "IpProtocol": "tcp",
+                "FromPort": { "Ref": "RedshiftPort" },
+                "ToPort": { "Ref": "RedshiftPort" },
+                "SourceSecurityGroupId": {
+                    "Ref": "StudioSecurityGroup"
+                }
+            }
+        },
+        "RedshiftSecurityGroupJobserverIngress": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Condition": "JobserverSecurityGroupCondition",
+            "Properties": {
+                "GroupId": {
+                    "Ref": "RedshiftSecurityGroup"
+                },
+                "IpProtocol": "tcp",
+                "FromPort": { "Ref": "RedshiftPort" },
+                "ToPort": { "Ref": "RedshiftPort" },
+                "SourceSecurityGroupId": {
+                    "Ref": "JobserverSecurityGroup"
+                }
+            }
+        },
+		"EMRServiceSG": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Condition": "CreateEmrCondition",
+            "DependsOn": [ "EMRMasterSG" ],
+            "DeletionPolicy": "Delete",
+            "Properties": {
+                "GroupDescription": "EMR Service Security Group",
+                "VpcId": { "Ref": "VpcId" },
+                "SecurityGroupEgress": [
+                    {
+                        "IpProtocol": "-1",
+                        "FromPort": "0",
+                        "ToPort": "65535",
+                        "CidrIp": "0.0.0.0/0"
+                    }
+                ]
+            }
+        },
+        "EMRSlaveSG": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Condition": "CreateEmrCondition",
+            "DependsOn": [ "EMRMasterSG" ],
+            "DeletionPolicy": "Delete",
+            "Properties": {
+                "GroupDescription": "EMR Slave Security Group",
+                "VpcId": { "Ref": "VpcId" },
+                "SecurityGroupEgress": [
+                    {
+                        "IpProtocol": "-1",
+                        "FromPort": "0",
+                        "ToPort": "65535",
+                        "CidrIp": "0.0.0.0/0"
+                    }
+                ]
+            }
+        },
+        "EmrSlaveIngressSlave": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Condition": "CreateEmrCondition",
+            "Properties": {
+                "IpProtocol": "tcp",
+                "FromPort": "0",
+                "ToPort": "65535",
+                "SourceSecurityGroupId": {
+                    "Ref": "EMRSlaveSG"
+                },
+                "GroupId": {
+                    "Ref": "EMRSlaveSG"
+                }
+            }
+        },
+        "EmrSlaveIngressMaster": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Condition": "CreateEmrCondition",
+            "Properties": {
+                "IpProtocol": "tcp",
+                "FromPort": "0",
+                "ToPort": "65535",
+                "SourceSecurityGroupId": {
+                    "Ref": "EMRMasterSG"
+                },
+                "GroupId": {
+                    "Ref": "EMRSlaveSG"
+                }
+            }
+        },
+        "EmrSlaveIngressSlaveUDP": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Condition": "CreateEmrCondition",
+            "Properties": {
+                "IpProtocol": "UDP",
+                "FromPort": "0",
+                "ToPort": "65535",
+                "SourceSecurityGroupId": {
+                    "Ref": "EMRSlaveSG"
+                },
+                "GroupId": {
+                    "Ref": "EMRSlaveSG"
+                }
+            }
+        },
+        "EmrSlaveIngressMasterUDP": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Condition": "CreateEmrCondition",
+            "Properties": {
+                "IpProtocol": "UDP",
+                "FromPort": "0",
+                "ToPort": "65535",
+                "SourceSecurityGroupId": {
+                    "Ref": "EMRMasterSG"
+                },
+                "GroupId": {
+                    "Ref": "EMRSlaveSG"
+                }
+            }
+        },
+        "EmrSlaveIngressSlaveICMP": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Condition": "CreateEmrCondition",
+            "Properties": {
+                "IpProtocol": "ICMP",
+                "FromPort": "8",
+                "ToPort": "0",
+                "SourceSecurityGroupId": {
+                    "Ref": "EMRSlaveSG"
+                },
+                "GroupId": {
+                    "Ref": "EMRSlaveSG"
+                }
+            }
+        },
+        "EmrSlaveIngressMasterICMP": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Condition": "CreateEmrCondition",
+            "Properties": {
+                "IpProtocol": "ICMP",
+                "FromPort": "8",
+                "ToPort": "0",
+                "SourceSecurityGroupId": {
+                    "Ref": "EMRMasterSG"
+                },
+                "GroupId": {
+                    "Ref": "EMRSlaveSG"
+                }
+            }
+        },
+        "EMRMasterSG": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Condition": "CreateEmrCondition",
+            "DeletionPolicy": "Delete",
+            "Properties": {
+                "GroupDescription": "EMR Master Security Group",
+                "VpcId": { "Ref": "VpcId" },
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8443",
+                        "ToPort": "8443",
+                        "CidrIp": "207.171.167.101/32"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8443",
+                        "ToPort": "8443",
+                        "CidrIp": "207.171.167.25/32"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8443",
+                        "ToPort": "8443",
+                        "CidrIp": "207.171.167.26/32"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8443",
+                        "ToPort": "8443",
+                        "CidrIp": "207.171.172.6/32"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8443",
+                        "ToPort": "8443",
+                        "CidrIp": "72.21.217.0/24"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8443",
+                        "ToPort": "8443",
+                        "CidrIp": "72.21.198.64/29"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8443",
+                        "ToPort": "8443",
+                        "CidrIp": "72.21.196.64/29"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8443",
+                        "ToPort": "8443",
+                        "CidrIp": "54.239.98.0/24"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8443",
+                        "ToPort": "8443",
+                        "CidrIp": "54.240.217.16/29"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8443",
+                        "ToPort": "8443",
+                        "CidrIp": "54.240.217.64/28"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8443",
+                        "ToPort": "8443",
+                        "CidrIp": "54.240.217.8/29"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8443",
+                        "ToPort": "8443",
+                        "CidrIp": "54.240.217.80/29"
+                    }
+                ],
+                "SecurityGroupEgress": [
+                    {
+                        "IpProtocol": "-1",
+                        "FromPort": "0",
+                        "ToPort": "65535",
+                        "CidrIp": "0.0.0.0/0"
+                    }
+                ]
+            }
+        },
+        "EmrMasterIngressSlave": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Condition": "CreateEmrCondition",
+            "Properties": {
+                "IpProtocol": "tcp",
+                "FromPort": "0",
+                "ToPort": "65535",
+                "SourceSecurityGroupId": {
+                    "Ref": "EMRSlaveSG"
+                },
+                "GroupId": {
+                    "Ref": "EMRMasterSG"
+                }
+            }
+        },
+        "EmrMasterIngressMaster": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Condition": "CreateEmrCondition",
+            "Properties": {
+                "IpProtocol": "tcp",
+                "FromPort": "0",
+                "ToPort": "65535",
+                "SourceSecurityGroupId": {
+                    "Ref": "EMRMasterSG"
+                },
+                "GroupId": {
+                    "Ref": "EMRMasterSG"
+                }
+            }
+        },
+        "EmrMasterIngressSlaveUDP": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Condition": "CreateEmrCondition",
+            "Properties": {
+                "IpProtocol": "UDP",
+                "FromPort": "0",
+                "ToPort": "65535",
+                "SourceSecurityGroupId": {
+                    "Ref": "EMRSlaveSG"
+                },
+                "GroupId": {
+                    "Ref": "EMRMasterSG"
+                }
+            }
+        },
+        "EmrMasterIngressMasterUDP": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Condition": "CreateEmrCondition",
+            "Properties": {
+                "IpProtocol": "UDP",
+                "FromPort": "0",
+                "ToPort": "65535",
+                "SourceSecurityGroupId": {
+                    "Ref": "EMRMasterSG"
+                },
+                "GroupId": {
+                    "Ref": "EMRMasterSG"
+                }
+            }
+        },
+        "EmrMasterIngressSlaveICMP": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Condition": "CreateEmrCondition",
+            "Properties": {
+                "IpProtocol": "ICMP",
+                "FromPort": "8",
+                "ToPort": "0",
+                "SourceSecurityGroupId": {
+                    "Ref": "EMRSlaveSG"
+                },
+                "GroupId": {
+                    "Ref": "EMRMasterSG"
+                }
+            }
+        },
+        "EmrMasterIngressMasterICMP": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Condition": "CreateEmrCondition",
+            "Properties": {
+                "IpProtocol": "ICMP",
+                "FromPort": "8",
+                "ToPort": "0",
+                "SourceSecurityGroupId": {
+                    "Ref": "EMRMasterSG"
+                },
+                "GroupId": {
+                    "Ref": "EMRMasterSG"
+                }
+            }
+        }
+    },
+    "Outputs": {
+        "EMRMasterSGID": {
+            "Condition": "CreateEmrCondition",
+            "Value": {
+                "Fn::GetAtt": [
+                    "EMRMasterSG",
+                    "GroupId"
+                ]
+            },
+            "Export": {
+                "Name": { "Fn::Sub": "${AWS::StackName}:EMRMasterSGID" }
+            }
+        },
+		"EMRSlaveSGID": {
+            "Condition": "CreateEmrCondition",
+            "Value": {
+                "Fn::GetAtt": [
+                    "EMRSlaveSG",
+                    "GroupId"
+                ]
+            },
+            "Export": {
+                "Name": { "Fn::Sub": "${AWS::StackName}:EMRSlaveSGID" }
+            }
+        },
+		"EMRServiceSGID": {
+            "Condition": "CreateEmrCondition",
+            "Value": {
+                "Fn::GetAtt": [
+                    "EMRServiceSG",
+                    "GroupId"
+                ]
+            },
+            "Export": {
+                "Name": { "Fn::Sub": "${AWS::StackName}:EMRSlaveSGID" }
+            }
+        }
+    }
+}
