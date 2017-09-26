@@ -112,15 +112,18 @@
         },
         "EMRMasterSG": {
             "Description": "Create EMR Master Security Group.",
-            "Type": "String"
+            "Type": "String",
+            "Default": ""
         },
         "EMRSlaveSG": {
             "Description": "Create EMR Slave Security Group.",
-            "Type": "String"
+            "Type": "String",
+            "Default": ""
         },
         "EMRServiceSG": {
             "Description": "Create EMR Service Security Group.",
-            "Type": "String"
+            "Type": "String",
+            "Default": ""
         }
     },
     "Mappings": {},
