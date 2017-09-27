@@ -291,6 +291,11 @@
         "EmrInstance": {
             "Type": "AWS::EMR::Cluster",
             "Condition": "CreateEmrCondition",
+            "DependsOn": [
+                { "Ref": "EMRMasterSG" },
+                { "Ref": "EMRSlaveSG" },
+                { "Ref": "EMRServiceSG" }
+            ],
             "Properties": {
                 "Instances": {
                     "MasterInstanceGroup": {
