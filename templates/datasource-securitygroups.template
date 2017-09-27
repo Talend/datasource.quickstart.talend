@@ -164,7 +164,7 @@
 		"EMRServiceSG": {
             "Type": "AWS::EC2::SecurityGroup",
             "Condition": "CreateEmrCondition",
-            "DependsOn": [ "EMRMasterSG" ],
+            "DependsOn": [ "EMRSlaveSG" ],
             "DeletionPolicy": "Delete",
             "Properties": {
                 "GroupDescription": "EMR Service Security Group",
