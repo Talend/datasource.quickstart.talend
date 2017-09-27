@@ -503,7 +503,7 @@
                 ]
             },
             "Export": {
-                "Name": { "Fn::Sub": "${AWS::StackName}:EMRSlaveSGID" }
+                "Name": { "Fn::Sub": "${AWS::StackName}:EMRServiceSGID" }
             }
         }
     }
