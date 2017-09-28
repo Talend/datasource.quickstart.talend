@@ -26,7 +26,10 @@
                     },
                     "Parameters": [
                         "CreateEmr",
-                        "EmrSubnetA"
+                        "EmrSubnetA",
+						"EMRMasterInstanceType",
+                        "EMRCoreInstanceType",
+						"EMRCoreNodes"
                     ]
                 },
                 {
@@ -40,7 +43,9 @@
                         "RedshiftUsername",
                         "RedshiftPassword",
                         "RedshiftDbName",
-                        "RedshiftPort"
+                        "RedshiftPort",
+						"RedshiftNodeType",
+						"RedshiftNumberOfNodes"
                     ]
                 }
             ]
@@ -91,6 +96,29 @@
             "Type": "String",
             "Default": "5439"
         },
+		"RedshiftNodeType": {
+            "AllowedValues": [
+                "dw1.xlarge",
+                "dw1.8xlarge",
+                "dw2.large",
+                "dw2.8xlarge",
+                "dc1.large",
+                "dc1.8xlarge",
+                "ds1.xlarge",
+                "ds1.8xlarge",
+                "ds2.xlarge",
+                "ds2.8xlarge"
+            ],
+            "ConstraintDescription": "must be a valid RedShift node type.",
+            "Default": "dc1.large",
+            "Description": "The node type to for the redshift cluster",
+            "Type": "String"
+        },
+		"RedshiftNumberOfNodes": {
+            "Default": "1",
+            "Description": "The number of nodes in the redshift cluster.",
+            "Type": "Number"
+        },
         "CreateEmr": {
             "Description": "Create EMR.",
             "Type": "String",
@@ -103,6 +131,49 @@
         "EmrSubnetA": {
             "Description": "EMR Subnet A",
             "Type": "AWS::EC2::Subnet::Id"
+        },
+		 "EMRMasterInstanceType": {
+            "AllowedValues": [
+                "m3.xlarge",
+                "m3.2xlarge",
+                "m4.large",
+                "m4.xlarge",
+                "m4.2xlarge",
+                "c3.large",
+                "c3.xlarge",
+                "c3.2xlarge",
+                "c4.large",
+                "c4.xlarge",
+                "c4.2xlarge"
+            ],
+            "Default": "m4.large",
+            "Description": "Instance type for the EMR master node. Default is m4.large",
+            "Type": "String"
+        },
+		"EMRCoreInstanceType": {
+            "AllowedValues": [
+                "m3.xlarge",
+                "m3.2xlarge",
+                "m4.large",
+                "m4.xlarge",
+                "m4.2xlarge",
+                "c3.large",
+                "c3.xlarge",
+                "c3.2xlarge",
+                "c4.large",
+                "c4.xlarge",
+                "c4.2xlarge"
+            ],
+            "Default": "m4.large",
+            "Description": "Instance type for the EMR core nodes. Default is m4.large",
+            "Type": "String"
+        },
+		"EMRCoreNodes": {
+            "Description": "Number of EMR Core Nodes. Minimum 1",
+            "MaxValue": "500",
+            "MinValue": "1",
+            "Type": "Number",
+			"Default": "2"
         },
         "TalendEmrSecurityGroup": {
             "Description": "Talend EMR Security Group.",
@@ -119,7 +190,20 @@
         }
     },
     "Mappings": {},
+	
     "Conditions": {
+		"IsMultiNodeCluster": {
+            "Fn::Not": [
+                {
+                    "Fn::Equals": [
+                        {
+                            "Ref": "RedshiftNumberOfNodes"
+                        },
+                        "1"
+                    ]
+                }
+            ]
+        },
         "IsGovCloud": {
             "Fn::Equals": [
                 { "Ref": "AWS::Region" },
@@ -255,8 +339,25 @@
             "DependsOn": [ "RedhsiftSubnetGroup" ],
             "Properties": {
                 "ClusterSubnetGroupName": { "Ref": "RedhsiftSubnetGroup" },
-                "ClusterType": "single-node",
-                "NodeType": "dc1.large",
+                "ClusterType": {
+                    "Fn::If": [
+                        "IsMultiNodeCluster",
+                        "multi-node",
+                        "single-node"
+                    ]
+                },
+                "NodeType": { "Ref": "RedshiftNodeType" },
+				"NumberOfNodes": {
+                    "Fn::If": [
+                        "IsMultiNodeCluster",
+                        {
+                            "Ref": "RedshiftNumberOfNodes"
+                        },
+                        {
+                            "Ref": "AWS::NoValue"
+                        }
+                    ]
+                },
                 "VpcSecurityGroupIds": [ { "Ref": "RedshiftSecurityGroup" } ],
                 "DBName": { "Ref": "RedshiftDbName" },
                 "MasterUsername": { "Ref": "RedshiftUsername" },
@@ -272,13 +373,13 @@
                 "Instances": {
                     "MasterInstanceGroup": {
                         "InstanceCount": 1,
-                        "InstanceType": "m4.large",
+                        "InstanceType": { "Ref": "EMRMasterInstanceType" },
                         "Market": "ON_DEMAND",
                         "Name": "Master"
                     },
                     "CoreInstanceGroup": {
-                        "InstanceCount": 2,
-                        "InstanceType": "m4.large",
+                        "InstanceCount": { "Ref": "EMRCoreNodes" },
+                        "InstanceType": { "Ref": "EMRCoreInstanceType" },
                         "Market": "ON_DEMAND",
                         "Name": "Core"
                     },
@@ -303,10 +404,30 @@
                     ]
                 },
                 "Applications": [
-                    { "Name": "Hadoop" },
-                    { "Name": "Hive" },
-                    { "Name": "Pig" },
-                    { "Name": "Spark" }
+                    {
+                        "Name": "Hadoop"
+                    },
+                    {
+                        "Name": "Hive"
+                    },
+                    {
+                        "Name": "Pig"
+                    },
+					{
+                        "Name": "Hue"
+                    },
+					{
+                        "Name": "HBase"
+                    },
+					{
+                        "Name": "Sqoop"
+                    },
+					{
+                        "Name": "ZooKeeper"
+                    },
+                    {
+                        "Name": "Spark"
+                    }
                 ],
                 "ReleaseLabel": "emr-5.0.0",
                 "Name": "EmrInstance",
