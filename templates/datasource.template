@@ -26,7 +26,6 @@
                     },
                     "Parameters": [
                         "CreateEmr",
-                        "EMRVPC",
                         "EmrSubnetA"
                     ]
                 },
@@ -53,13 +52,14 @@
             "Type": "AWS::EC2::KeyPair::KeyName",
             "ConstraintDescription": "must be the name of an existing EC2 KeyPair."
         },
-        "EmrSubnetA": {
-            "Description": "EMR Subnet A",
-            "Type": "AWS::EC2::Subnet::Id"
-        },
-        "EMRVPC": {
-            "Description": "EMR VPC",
-            "Type": "AWS::EC2::VPC::Id"
+        "CreateRedshift": {
+            "Description": "Create Redshift.",
+            "Type": "String",
+            "Default": "false",
+            "AllowedValues": [
+                "true",
+                "false"
+            ]
         },
         "RedshiftSecurityGroup": {
             "Description": "Redshift security group",
@@ -91,20 +91,6 @@
             "Type": "String",
             "Default": "5439"
         },
-        "SupportsGlacier": {
-            "Description": "Does this region support Glacier",
-            "Type": "String",
-            "Default": "true"
-        },
-        "CreateRedshift": {
-            "Description": "Create Redshift.",
-            "Type": "String",
-            "Default": "false",
-            "AllowedValues": [
-                "true",
-                "false"
-            ]
-        },
         "CreateEmr": {
             "Description": "Create EMR.",
             "Type": "String",
@@ -114,6 +100,10 @@
                 "false"
             ]
         },
+        "EmrSubnetA": {
+            "Description": "EMR Subnet A",
+            "Type": "AWS::EC2::Subnet::Id"
+        },
         "TalendEmrSecurityGroup": {
             "Description": "Talend EMR Security Group.",
             "Type": "String"
@@ -121,6 +111,11 @@
         "RemoteAccessEmrSecurityGroup": {
             "Description": "Remote access EMR Security Group.",
             "Type": "String"
+        },
+        "SupportsGlacier": {
+            "Description": "Does this region support Glacier",
+            "Type": "String",
+            "Default": "true"
         }
     },
     "Mappings": {},
