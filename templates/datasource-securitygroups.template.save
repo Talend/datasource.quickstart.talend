@@ -164,6 +164,8 @@
 		"EMRServiceSG": {
             "Type": "AWS::EC2::SecurityGroup",
             "Condition": "CreateEmrCondition",
+            "DependsOn": [ "EMRSlaveSG" ],
+            "DeletionPolicy": "Delete",
             "Properties": {
                 "GroupDescription": "EMR Service Security Group",
                 "VpcId": { "Ref": "VpcId" },
@@ -180,6 +182,8 @@
         "EMRSlaveSG": {
             "Type": "AWS::EC2::SecurityGroup",
             "Condition": "CreateEmrCondition",
+            "DependsOn": [ "EMRMasterSG" ],
+            "DeletionPolicy": "Delete",
             "Properties": {
                 "GroupDescription": "EMR Slave Security Group",
                 "VpcId": { "Ref": "VpcId" },
@@ -208,36 +212,6 @@
                 }
             }
         },
-        "EmrSlaveIngressSlaveUDP": {
-            "Type": "AWS::EC2::SecurityGroupIngress",
-            "Condition": "CreateEmrCondition",
-            "Properties": {
-                "IpProtocol": "UDP",
-                "FromPort": "0",
-                "ToPort": "65535",
-                "SourceSecurityGroupId": {
-                    "Ref": "EMRSlaveSG"
-                },
-                "GroupId": {
-                    "Ref": "EMRSlaveSG"
-                }
-            }
-        },
-        "EmrSlaveIngressSlaveICMP": {
-            "Type": "AWS::EC2::SecurityGroupIngress",
-            "Condition": "CreateEmrCondition",
-            "Properties": {
-                "IpProtocol": "ICMP",
-                "FromPort": "-1",
-                "ToPort": "-1",
-                "SourceSecurityGroupId": {
-                    "Ref": "EMRSlaveSG"
-                },
-                "GroupId": {
-                    "Ref": "EMRSlaveSG"
-                }
-            }
-        },
         "EmrSlaveIngressMaster": {
             "Type": "AWS::EC2::SecurityGroupIngress",
             "Condition": "CreateEmrCondition",
@@ -247,6 +221,21 @@
                 "ToPort": "65535",
                 "SourceSecurityGroupId": {
                     "Ref": "EMRMasterSG"
+                },
+                "GroupId": {
+                    "Ref": "EMRSlaveSG"
+                }
+            }
+        },
+        "EmrSlaveIngressSlaveUDP": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Condition": "CreateEmrCondition",
+            "Properties": {
+                "IpProtocol": "UDP",
+                "FromPort": "0",
+                "ToPort": "65535",
+                "SourceSecurityGroupId": {
+                    "Ref": "EMRSlaveSG"
                 },
                 "GroupId": {
                     "Ref": "EMRSlaveSG"
@@ -268,13 +257,28 @@
                 }
             }
         },
+        "EmrSlaveIngressSlaveICMP": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Condition": "CreateEmrCondition",
+            "Properties": {
+                "IpProtocol": "ICMP",
+                "FromPort": "8",
+                "ToPort": "0",
+                "SourceSecurityGroupId": {
+                    "Ref": "EMRSlaveSG"
+                },
+                "GroupId": {
+                    "Ref": "EMRSlaveSG"
+                }
+            }
+        },
         "EmrSlaveIngressMasterICMP": {
             "Type": "AWS::EC2::SecurityGroupIngress",
             "Condition": "CreateEmrCondition",
             "Properties": {
                 "IpProtocol": "ICMP",
-                "FromPort": "-1",
-                "ToPort": "-1",
+                "FromPort": "8",
+                "ToPort": "0",
                 "SourceSecurityGroupId": {
                     "Ref": "EMRMasterSG"
                 },
@@ -295,48 +299,83 @@
                         "IpProtocol": "tcp",
                         "FromPort": "8443",
                         "ToPort": "8443",
-                        "CidrIp": { "Ref": "RemoteAccessCIDR" }
+                        "CidrIp": "207.171.167.101/32"
                     },
                     {
-                        "IpProtocol": "ICMP",
-                        "FromPort": "-1",
-                        "ToPort": "-1",
-                        "CidrIp": { "Ref": "RemoteAccessCIDR" }
+                        "IpProtocol": "tcp",
+                        "FromPort": "8443",
+                        "ToPort": "8443",
+                        "CidrIp": "207.171.167.25/32"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8443",
+                        "ToPort": "8443",
+                        "CidrIp": "207.171.167.26/32"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8443",
+                        "ToPort": "8443",
+                        "CidrIp": "207.171.172.6/32"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8443",
+                        "ToPort": "8443",
+                        "CidrIp": "72.21.217.0/24"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8443",
+                        "ToPort": "8443",
+                        "CidrIp": "72.21.198.64/29"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8443",
+                        "ToPort": "8443",
+                        "CidrIp": "72.21.196.64/29"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8443",
+                        "ToPort": "8443",
+                        "CidrIp": "54.239.98.0/24"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8443",
+                        "ToPort": "8443",
+                        "CidrIp": "54.240.217.16/29"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8443",
+                        "ToPort": "8443",
+                        "CidrIp": "54.240.217.64/28"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8443",
+                        "ToPort": "8443",
+                        "CidrIp": "54.240.217.8/29"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8443",
+                        "ToPort": "8443",
+                        "CidrIp": "54.240.217.80/29"
+                    }
+                ],
+                "SecurityGroupEgress": [
+                    {
+                        "IpProtocol": "-1",
+                        "FromPort": "0",
+                        "ToPort": "65535",
+                        "CidrIp": "0.0.0.0/0"
                     }
                 ]
-            }
-        },
-        "EmrMasterIngressMaster": {
-            "Type": "AWS::EC2::SecurityGroupIngress",
-            "Condition": "CreateEmrCondition",
-            "Properties": {
-                "IpProtocol": "tcp",
-                "FromPort": "0",
-                "ToPort": "65535",
-                "SourceSecurityGroupId": { "Ref": "EMRMasterSG" },
-                "GroupId": { "Ref": "EMRMasterSG" }
-            }
-        },
-        "EmrMasterIngressMasterUDP": {
-            "Type": "AWS::EC2::SecurityGroupIngress",
-            "Condition": "CreateEmrCondition",
-            "Properties": {
-                "IpProtocol": "UDP",
-                "FromPort": "0",
-                "ToPort": "65535",
-                "SourceSecurityGroupId": { "Ref": "EMRMasterSG" },
-                "GroupId": { "Ref": "EMRMasterSG" }
-            }
-        },
-        "EmrMasterIngressMasterICMP": {
-            "Type": "AWS::EC2::SecurityGroupIngress",
-            "Condition": "CreateEmrCondition",
-            "Properties": {
-                "IpProtocol": "ICMP",
-                "FromPort": "-1",
-                "ToPort": "-1",
-                "SourceSecurityGroupId": { "Ref": "EMRMasterSG" },
-                "GroupId": { "Ref": "EMRMasterSG" }
             }
         },
         "EmrMasterIngressSlave": {
@@ -346,8 +385,27 @@
                 "IpProtocol": "tcp",
                 "FromPort": "0",
                 "ToPort": "65535",
-                "SourceSecurityGroupId": { "Ref": "EMRSlaveSG" },
-                "GroupId": { "Ref": "EMRMasterSG" }
+                "SourceSecurityGroupId": {
+                    "Ref": "EMRSlaveSG"
+                },
+                "GroupId": {
+                    "Ref": "EMRMasterSG"
+                }
+            }
+        },
+        "EmrMasterIngressMaster": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Condition": "CreateEmrCondition",
+            "Properties": {
+                "IpProtocol": "tcp",
+                "FromPort": "0",
+                "ToPort": "65535",
+                "SourceSecurityGroupId": {
+                    "Ref": "EMRMasterSG"
+                },
+                "GroupId": {
+                    "Ref": "EMRMasterSG"
+                }
             }
         },
         "EmrMasterIngressSlaveUDP": {
@@ -357,8 +415,27 @@
                 "IpProtocol": "UDP",
                 "FromPort": "0",
                 "ToPort": "65535",
-                "SourceSecurityGroupId": { "Ref": "EMRSlaveSG" },
-                "GroupId": { "Ref": "EMRMasterSG" }
+                "SourceSecurityGroupId": {
+                    "Ref": "EMRSlaveSG"
+                },
+                "GroupId": {
+                    "Ref": "EMRMasterSG"
+                }
+            }
+        },
+        "EmrMasterIngressMasterUDP": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Condition": "CreateEmrCondition",
+            "Properties": {
+                "IpProtocol": "UDP",
+                "FromPort": "0",
+                "ToPort": "65535",
+                "SourceSecurityGroupId": {
+                    "Ref": "EMRMasterSG"
+                },
+                "GroupId": {
+                    "Ref": "EMRMasterSG"
+                }
             }
         },
         "EmrMasterIngressSlaveICMP": {
@@ -366,10 +443,29 @@
             "Condition": "CreateEmrCondition",
             "Properties": {
                 "IpProtocol": "ICMP",
-                "FromPort": "-1",
-                "ToPort": "-1",
-                "SourceSecurityGroupId": { "Ref": "EMRSlaveSG" },
-                "GroupId": { "Ref": "EMRMasterSG" }
+                "FromPort": "8",
+                "ToPort": "0",
+                "SourceSecurityGroupId": {
+                    "Ref": "EMRSlaveSG"
+                },
+                "GroupId": {
+                    "Ref": "EMRMasterSG"
+                }
+            }
+        },
+        "EmrMasterIngressMasterICMP": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Condition": "CreateEmrCondition",
+            "Properties": {
+                "IpProtocol": "ICMP",
+                "FromPort": "8",
+                "ToPort": "0",
+                "SourceSecurityGroupId": {
+                    "Ref": "EMRMasterSG"
+                },
+                "GroupId": {
+                    "Ref": "EMRMasterSG"
+                }
             }
         }
     },
