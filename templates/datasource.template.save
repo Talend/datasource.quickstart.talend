@@ -61,10 +61,6 @@
             "Description": "EMR VPC",
             "Type": "AWS::EC2::VPC::Id"
         },
-        "RedshiftSecurityGroup": {
-            "Description": "Redshift security group",
-            "Type": "String"
-        },
         "RedshiftSubnetA": {
             "Description": "Redshift subnet A",
             "Type": "AWS::EC2::Subnet::Id"
@@ -114,13 +110,20 @@
                 "false"
             ]
         },
-        "TalendEmrSecurityGroup": {
-            "Description": "Talend EMR Security Group.",
-            "Type": "String"
+        "EMRMasterSG": {
+            "Description": "Create EMR Master Security Group.",
+            "Type": "String",
+            "Default": ""
         },
-        "RemoteAccessEmrSecurityGroup": {
-            "Description": "Remote access EMR Security Group.",
-            "Type": "String"
+        "EMRSlaveSG": {
+            "Description": "Create EMR Slave Security Group.",
+            "Type": "String",
+            "Default": ""
+        },
+        "EMRServiceSG": {
+            "Description": "Create EMR Service Security Group.",
+            "Type": "String",
+            "Default": ""
         }
     },
     "Mappings": {},
@@ -249,24 +252,39 @@
             "Properties": {
                 "Description": "RedShift Subnet linked to both private database subnets",
                 "SubnetIds": [
-                    { "Ref": "RedshiftSubnetA" },
-                    { "Ref": "RedshiftSubnetB" }
+                    {
+                        "Ref": "RedshiftSubnetA"
+                    },
+                    {
+                        "Ref": "RedshiftSubnetB"
+                    }
                 ]
             }
         },
         "RedshiftInstance": {
             "Type": "AWS::Redshift::Cluster",
             "Condition": "CreateRedshiftCondition",
-            "DependsOn": [ "RedhsiftSubnetGroup" ],
+            "DependsOn": [
+                "RedhsiftSubnetGroup"
+            ],
             "Properties": {
-                "ClusterSubnetGroupName": { "Ref": "RedhsiftSubnetGroup" },
+                "ClusterSubnetGroupName": {
+                    "Ref": "RedhsiftSubnetGroup"
+                },
                 "ClusterType": "single-node",
                 "NodeType": "dc1.large",
-                "VpcSecurityGroupIds": { "Ref": "RedshiftSecurityGroup" },
-                "DBName": { "Ref": "RedshiftDbName" },
-                "MasterUsername": { "Ref": "RedshiftUsername" },
-                "MasterUserPassword": { "Ref": "RedshiftPassword" },
-                "Port": { "Ref": "RedshiftPort" },
+                "DBName": {
+                    "Ref": "RedshiftDbName"
+                },
+                "MasterUsername": {
+                    "Ref": "RedshiftUsername"
+                },
+                "MasterUserPassword": {
+                    "Ref": "RedshiftPassword"
+                },
+                "Port": {
+                    "Ref": "RedshiftPort"
+                },
                 "PubliclyAccessible": false
             }
         },
@@ -279,39 +297,44 @@
                         "InstanceCount": 1,
                         "InstanceType": "m4.large",
                         "Market": "ON_DEMAND",
-                        "Name": "Master"
+                        "Name": "Master instance group - 1"
                     },
                     "CoreInstanceGroup": {
-                        "InstanceCount": 2,
+                        "InstanceCount": 1,
                         "InstanceType": "m4.large",
                         "Market": "ON_DEMAND",
-                        "Name": "Core"
+                        "Name": "Core instance group - 2"
                     },
                     "TerminationProtected": false,
-                    "Ec2SubnetId": { "Ref": "EmrSubnetA" },
-                    "Ec2KeyName": { "Ref": "KeyPair" },
-                    "AdditionalMasterSecurityGroups": [
-                        {
-                            "Ref": "TalendEmrSecurityGroup"
-                        },
-                        {
-                            "Ref": "RemoteAccessEmrSecurityGroup"
-                        }
-                    ],
-                    "AdditionalSlaveSecurityGroups": [
-                        {
-                            "Ref": "TalendEmrSecurityGroup"
-                        },
-                        {
-                            "Ref": "RemoteAccessEmrSecurityGroup"
-                        }
-                    ]
+                    "Ec2SubnetId": {
+                        "Ref": "EmrSubnetA"
+                    },
+                    "Ec2KeyName": {
+                        "Ref": "KeyPair"
+                    },
+                    "EmrManagedMasterSecurityGroup": {
+                        "Ref": "EMRMasterSG"
+                    },
+					"ServiceAccessSecurityGroup": {
+                        "Ref": "EMRServiceSG"
+                    },
+                    "EmrManagedSlaveSecurityGroup": {
+                        "Ref": "EMRSlaveSG"
+                    }
                 },
                 "Applications": [
-                    { "Name": "Hadoop" },
-                    { "Name": "Hive" },
-                    { "Name": "Pig" },
-                    { "Name": "Spark" }
+                    {
+                        "Name": "Hadoop"
+                    },
+                    {
+                        "Name": "Hive"
+                    },
+                    {
+                        "Name": "Pig"
+                    },
+                    {
+                        "Name": "Spark"
+                    }
                 ],
                 "ReleaseLabel": "emr-5.0.0",
                 "Name": "EmrInstance",
