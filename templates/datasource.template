@@ -262,7 +262,7 @@
                 "ClusterSubnetGroupName": { "Ref": "RedhsiftSubnetGroup" },
                 "ClusterType": "single-node",
                 "NodeType": "dc1.large",
-                "VpcSecurityGroupIds": { "Ref": "RedshiftSecurityGroup" },
+                "VpcSecurityGroupIds": [ { "Ref": "RedshiftSecurityGroup" } ],
                 "DBName": { "Ref": "RedshiftDbName" },
                 "MasterUsername": { "Ref": "RedshiftUsername" },
                 "MasterUserPassword": { "Ref": "RedshiftPassword" },
