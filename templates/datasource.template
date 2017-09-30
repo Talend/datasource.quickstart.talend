@@ -232,7 +232,7 @@
     "Resources": {
         "EmrLogBucket": {
             "Type": "AWS::S3::Bucket",
-            "DeletionPolicy": "Delete",
+            "DeletionPolicy": "Retain",
             "Properties": {
                 "AccessControl": "Private",
                 "LifecycleConfiguration": {
@@ -258,7 +258,7 @@
         },
         "TalendStorageBucket": {
             "Type": "AWS::S3::Bucket",
-            "DeletionPolicy": "Delete",
+            "DeletionPolicy": "Retain",
             "Properties": {
                 "AccessControl": "Private",
                 "LifecycleConfiguration": {
