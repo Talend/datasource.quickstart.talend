@@ -132,7 +132,7 @@
             "Description": "EMR Subnet A",
             "Type": "AWS::EC2::Subnet::Id"
         },
-		 "EMRMasterInstanceType": {
+		"EMRMasterInstanceType": {
             "AllowedValues": [
                 "m3.xlarge",
                 "m3.2xlarge",
@@ -230,6 +230,32 @@
         }
     },
     "Resources": {
+        "EmrLogBucket": {
+            "Type": "AWS::S3::Bucket",
+            "DeletionPolicy": "Delete",
+            "Properties": {
+                "AccessControl": "Private",
+                "LifecycleConfiguration": {
+                    "Rules": [
+                        {
+                            "Id": "Transition90daysRetain7yrs",
+                            "Status": "Enabled",
+                            "ExpirationInDays": 2555,
+                            "Transition": {
+                                "TransitionInDays": 90,
+                                "StorageClass": {
+                                    "Fn::If": [
+                                        "SupportsGlacierCondition",
+                                        "GLACIER",
+                                        "STANDARD_IA"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        },
         "TalendStorageBucket": {
             "Type": "AWS::S3::Bucket",
             "DeletionPolicy": "Delete",
@@ -404,31 +430,16 @@
                     ]
                 },
                 "Applications": [
-                    {
-                        "Name": "Hadoop"
-                    },
-                    {
-                        "Name": "Hive"
-                    },
-                    {
-                        "Name": "Pig"
-                    },
-					{
-                        "Name": "Hue"
-                    },
-					{
-                        "Name": "HBase"
-                    },
-					{
-                        "Name": "Sqoop"
-                    },
-					{
-                        "Name": "ZooKeeper"
-                    },
-                    {
-                        "Name": "Spark"
-                    }
+                    { "Name": "Hadoop" },
+                    { "Name": "Hive" },
+                    { "Name": "Pig" },
+					{ "Name": "Hue" },
+					{ "Name": "HBase" },
+					{ "Name": "Sqoop" },
+					{ "Name": "ZooKeeper" },
+                    { "Name": "Spark" }
                 ],
+                "LogUri": { "Fn::Sub": "s3://${EmrLogBucket}" },
                 "ReleaseLabel": "emr-5.0.0",
                 "Name": "EmrInstance",
                 "JobFlowRole": "EMR_EC2_DefaultRole",
@@ -446,7 +457,7 @@
         }
     },
     "Outputs": {
-        "TalendS3DomainName": {
+        "TalendStorageBucket": {
             "Value": {
                 "Fn::GetAtt": [
                     "TalendStorageBucket",
@@ -455,7 +466,20 @@
             },
             "Export": {
                 "Name": {
-                    "Fn::Sub": "${AWS::StackName}:TalendS3DomainName"
+                    "Fn::Sub": "${AWS::StackName}:TalendStorageBucket"
+                }
+            }
+        },
+        "EmrLogBucket": {
+            "Value": {
+                "Fn::GetAtt": [
+                    "EmrLogBucket",
+                    "DomainName"
+                ]
+            },
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}:EmrLogBucket"
                 }
             }
         },
