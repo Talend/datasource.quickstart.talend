@@ -100,40 +100,34 @@
     },
     "Outputs": {
         "RedshiftSecurityGroupID": {
-            "Condition": "CreateRedshiftCondition",
             "Value": {
-                "Fn::GetAtt": [
-                    "RedshiftSecurityGroup",
-                    "GroupId"
+                "Fn::If": [
+                    "CreateRedshiftCondition",
+                    { "Fn::GetAtt": [ "RedshiftSecurityGroup", "GroupId" ] },
+                    ""
                 ]
             },
-            "Export": {
-                "Name": { "Fn::Sub": "${AWS::StackName}:RedshiftSecurityGroupID" }
-            }
+            "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:RedshiftSecurityGroupID" } }
         },
         "EmrSecurityGroupID": {
-            "Condition": "CreateEmrCondition",
             "Value": {
-                "Fn::GetAtt": [
-                    "EmrSecurityGroup",
-                    "GroupId"
+                "Fn::If": [
+                    "CreateEmrCondition",
+                    { "Fn::GetAtt": [ "EmrSecurityGroup", "GroupId" ] },
+                    ""
                 ]
             },
-            "Export": {
-                "Name": { "Fn::Sub": "${AWS::StackName}:EmrSecurityGroupID" }
-            }
+            "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:EmrSecurityGroupID" } }
         },
         "RemoteAccessEmrSecurityGroupID": {
-            "Condition": "CreateEmrCondition",
             "Value": {
-                "Fn::GetAtt": [
-                    "RemoteAccessEmrSecurityGroup",
-                    "GroupId"
+                "Fn::If": [
+                    "CreateEmrCondition",
+                    { "Fn::GetAtt": [ "RemoteAccessEmrSecurityGroup", "GroupId" ] },
+                    ""
                 ]
             },
-            "Export": {
-                "Name": { "Fn::Sub": "${AWS::StackName}:RemoteAccessEmrSecurityGroupID" }
-            }
+            "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:RemoteAccessEmrSecurityGroupID" } }
         }
     }
 }
