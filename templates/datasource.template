@@ -230,32 +230,6 @@
         }
     },
     "Resources": {
-        "EmrLogBucket": {
-            "Type": "AWS::S3::Bucket",
-            "DeletionPolicy": "Retain",
-            "Properties": {
-                "AccessControl": "Private",
-                "LifecycleConfiguration": {
-                    "Rules": [
-                        {
-                            "Id": "Transition90daysRetain7yrs",
-                            "Status": "Enabled",
-                            "ExpirationInDays": 2555,
-                            "Transition": {
-                                "TransitionInDays": 90,
-                                "StorageClass": {
-                                    "Fn::If": [
-                                        "SupportsGlacierCondition",
-                                        "GLACIER",
-                                        "STANDARD_IA"
-                                    ]
-                                }
-                            }
-                        }
-                    ]
-                }
-            }
-        },
         "TalendStorageBucket": {
             "Type": "AWS::S3::Bucket",
             "DeletionPolicy": "Retain",
@@ -348,7 +322,8 @@
                 }
             }
         },
-        "RedhsiftSubnetGroup": {
+        
+        "RedshiftSubnetGroup": {
             "Type": "AWS::Redshift::ClusterSubnetGroup",
             "Condition": "CreateRedshiftCondition",
             "Properties": {
@@ -362,9 +337,9 @@
         "RedshiftInstance": {
             "Type": "AWS::Redshift::Cluster",
             "Condition": "CreateRedshiftCondition",
-            "DependsOn": [ "RedhsiftSubnetGroup" ],
+            "DependsOn": [ "RedshiftSubnetGroup" ],
             "Properties": {
-                "ClusterSubnetGroupName": { "Ref": "RedhsiftSubnetGroup" },
+                "ClusterSubnetGroupName": { "Ref": "RedshiftSubnetGroup" },
                 "ClusterType": {
                     "Fn::If": [
                         "IsMultiNodeCluster",
@@ -392,6 +367,34 @@
                 "PubliclyAccessible": false
             }
         },
+        
+        "EmrLogBucket": {
+            "Type": "AWS::S3::Bucket",
+            "Condition": "CreateEmrCondition",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+                "AccessControl": "Private",
+                "LifecycleConfiguration": {
+                    "Rules": [
+                        {
+                            "Id": "Transition90daysRetain7yrs",
+                            "Status": "Enabled",
+                            "ExpirationInDays": 2555,
+                            "Transition": {
+                                "TransitionInDays": 90,
+                                "StorageClass": {
+                                    "Fn::If": [
+                                        "SupportsGlacierCondition",
+                                        "GLACIER",
+                                        "STANDARD_IA"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        },
         "EmrInstance": {
             "Type": "AWS::EMR::Cluster",
             "Condition": "CreateEmrCondition",
@@ -413,20 +416,12 @@
                     "Ec2SubnetId": { "Ref": "EmrSubnetA" },
                     "Ec2KeyName": { "Ref": "KeyPair" },
                     "AdditionalMasterSecurityGroups": [
-                        {
-                            "Ref": "TalendEmrSecurityGroup"
-                        },
-                        {
-                            "Ref": "RemoteAccessEmrSecurityGroup"
-                        }
+                        { "Ref": "TalendEmrSecurityGroup" },
+                        { "Ref": "RemoteAccessEmrSecurityGroup" }
                     ],
                     "AdditionalSlaveSecurityGroups": [
-                        {
-                            "Ref": "TalendEmrSecurityGroup"
-                        },
-                        {
-                            "Ref": "RemoteAccessEmrSecurityGroup"
-                        }
+                        { "Ref": "TalendEmrSecurityGroup" },
+                        { "Ref": "RemoteAccessEmrSecurityGroup" }
                     ]
                 },
                 "Applications": [
@@ -458,83 +453,58 @@
     },
     "Outputs": {
         "TalendStorageBucket": {
-            "Value": {
-                "Fn::GetAtt": [
-                    "TalendStorageBucket",
-                    "DomainName"
-                ]
-            },
-            "Export": {
-                "Name": {
-                    "Fn::Sub": "${AWS::StackName}:TalendStorageBucket"
-                }
-            }
+            "Value": { "Fn::GetAtt": [ "TalendStorageBucket", "DomainName" ] },
+            "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:TalendStorageBucket" } }
         },
         "EmrLogBucket": {
             "Value": {
-                "Fn::GetAtt": [
-                    "EmrLogBucket",
-                    "DomainName"
+                "Fn::If": [
+                    "CreateEmrCondition",
+                    { "Fn::GetAtt": [ "EmrLogBucket", "DomainName" ] },
+                    ""
                 ]
             },
-            "Export": {
-                "Name": {
-                    "Fn::Sub": "${AWS::StackName}:EmrLogBucket"
-                }
-            }
+            "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:EmrLogBucket" } }
         },
         "EmrMasterPublicDns": {
-            "Condition": "CreateEmrCondition",
             "Value": {
-                "Fn::GetAtt": [
-                    "EmrInstance",
-                    "MasterPublicDNS"
+                "Fn::If": [
+                    "CreateEmrCondition",
+                    { "Fn::GetAtt": [ "EmrInstance", "MasterPublicDNS" ] },
+                    ""
                 ]
             },
-            "Export": {
-                "Name": {
-                    "Fn::Sub": "${AWS::StackName}:EmrMasterPublicDns"
-                }
-            }
+            "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:EmrMasterPublicDns" } }
         },
         "RedshiftEndpoint": {
-            "Condition": "CreateRedshiftCondition",
             "Value": {
-                "Fn::GetAtt": [
-                    "RedshiftInstance",
-                    "Endpoint.Address"
+                "Fn::If": [
+                    "CreateRedshiftCondition",
+                    { "Fn::GetAtt": [ "RedshiftInstance", "Endpoint.Address" ] },
+                    ""
                 ]
             },
-            "Export": {
-                "Name": {
-                    "Fn::Sub": "${AWS::StackName}:RedshiftEndpoint"
-                }
-            }
+            "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:RedshiftEndpoint" } }
         },
         "RedshiftPort": {
-            "Condition": "CreateRedshiftCondition",
             "Value": {
-                "Fn::GetAtt": [
-                    "RedshiftInstance",
-                    "Endpoint.Port"
-                ]
+                "Fn::If": [
+                    "CreateRedshiftCondition",
+                    { "Fn::GetAtt": [ "RedshiftInstance", "Endpoint.Port" ] },
+                    ""
+                ] 
             },
-            "Export": {
-                "Name": {
-                    "Fn::Sub": "${AWS::StackName}:RedshiftPort"
-                }
-            }
+            "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:RedshiftPort" } }
         },
         "RedshiftJdbcUrl": {
-            "Condition": "CreateRedshiftCondition",
             "Value": {
-                "Fn::Sub": "jdbc:redshift://${RedshiftInstance.Endpoint.Address}:${RedshiftInstance.Endpoint.Port}/${RedshiftDbName}"
+                "Fn::If": [
+                    "CreateRedshiftCondition",
+                    { "Fn::Sub": "jdbc:redshift://${RedshiftInstance.Endpoint.Address}:${RedshiftInstance.Endpoint.Port}/${RedshiftDbName}" },
+                    ""
+                ]
             },
-            "Export": {
-                "Name": {
-                    "Fn::Sub": "${AWS::StackName}:RedshiftJdbcUrl"
-                }
-            }
+            "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:RedshiftJdbcUrl" } }
         }
     }
 }
