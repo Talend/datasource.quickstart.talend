@@ -57,7 +57,6 @@
     "Resources": {
         "RedshiftSecurityGroup": {
             "Type": "AWS::EC2::SecurityGroup",
-            "Condition": "CreateRedshiftCondition",
             "Properties": {
                 "VpcId": { "Ref": "VpcId" },
                 "GroupDescription": "Allow access to Redshift from Studio, Bastion, and external CIDR on RedshiftPort (5439).",
@@ -75,7 +74,6 @@
         },
         "RemoteAccessEmrSecurityGroup": {
             "Type": "AWS::EC2::SecurityGroup",
-            "Condition": "CreateEmrCondition",
             "Properties": {
                 "GroupDescription": "Enable EMR remote access",
                 "VpcId": { "Ref": "VpcId" },
@@ -91,7 +89,6 @@
         },
         "EmrSecurityGroup": {
             "Type": "AWS::EC2::SecurityGroup",
-            "Condition": "CreateEmrCondition",
             "Properties": {
                 "GroupDescription": "Enable EMR access from Bastion servers, Jobservers, and Studio.",
                 "VpcId": { "Ref": "VpcId" }
@@ -100,33 +97,15 @@
     },
     "Outputs": {
         "RedshiftSecurityGroupID": {
-            "Value": {
-                "Fn::If": [
-                    "CreateRedshiftCondition",
-                    { "Fn::GetAtt": [ "RedshiftSecurityGroup", "GroupId" ] },
-                    ""
-                ]
-            },
+            "Value": { "Fn::GetAtt": [ "RedshiftSecurityGroup", "GroupId" ] },
             "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:RedshiftSecurityGroupID" } }
         },
         "EmrSecurityGroupID": {
-            "Value": {
-                "Fn::If": [
-                    "CreateEmrCondition",
-                    { "Fn::GetAtt": [ "EmrSecurityGroup", "GroupId" ] },
-                    ""
-                ]
-            },
+            "Value": { "Fn::GetAtt": [ "EmrSecurityGroup", "GroupId" ] },
             "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:EmrSecurityGroupID" } }
         },
         "RemoteAccessEmrSecurityGroupID": {
-            "Value": {
-                "Fn::If": [
-                    "CreateEmrCondition",
-                    { "Fn::GetAtt": [ "RemoteAccessEmrSecurityGroup", "GroupId" ] },
-                    ""
-                ]
-            },
+            "Value": { "Fn::GetAtt": [ "RemoteAccessEmrSecurityGroup", "GroupId" ] },
             "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:RemoteAccessEmrSecurityGroupID" } }
         }
     }

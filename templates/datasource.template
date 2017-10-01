@@ -457,53 +457,28 @@
             "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:TalendStorageBucket" } }
         },
         "EmrLogBucket": {
-            "Value": {
-                "Fn::If": [
-                    "CreateEmrCondition",
-                    { "Fn::GetAtt": [ "EmrLogBucket", "DomainName" ] },
-                    ""
-                ]
-            },
+            "Condition": "CreateEmrCondition",
+            "Value": { "Fn::GetAtt": [ "EmrLogBucket", "DomainName" ] },
             "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:EmrLogBucket" } }
         },
         "EmrMasterPublicDns": {
-            "Value": {
-                "Fn::If": [
-                    "CreateEmrCondition",
-                    { "Fn::GetAtt": [ "EmrInstance", "MasterPublicDNS" ] },
-                    ""
-                ]
-            },
+            "Condition": "CreateEmrCondition",
+            "Value": { "Fn::GetAtt": [ "EmrInstance", "MasterPublicDNS" ] },
             "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:EmrMasterPublicDns" } }
         },
         "RedshiftEndpoint": {
-            "Value": {
-                "Fn::If": [
-                    "CreateRedshiftCondition",
-                    { "Fn::GetAtt": [ "RedshiftInstance", "Endpoint.Address" ] },
-                    ""
-                ]
-            },
+            "Condition": "CreateRedshiftCondition",
+            "Value": { "Fn::GetAtt": [ "RedshiftInstance", "Endpoint.Address" ] },
             "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:RedshiftEndpoint" } }
         },
         "RedshiftPort": {
-            "Value": {
-                "Fn::If": [
-                    "CreateRedshiftCondition",
-                    { "Fn::GetAtt": [ "RedshiftInstance", "Endpoint.Port" ] },
-                    ""
-                ] 
-            },
+            "Condition": "CreateRedshiftCondition",
+            "Value": { "Fn::GetAtt": [ "RedshiftInstance", "Endpoint.Port" ] },
             "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:RedshiftPort" } }
         },
         "RedshiftJdbcUrl": {
-            "Value": {
-                "Fn::If": [
-                    "CreateRedshiftCondition",
-                    { "Fn::Sub": "jdbc:redshift://${RedshiftInstance.Endpoint.Address}:${RedshiftInstance.Endpoint.Port}/${RedshiftDbName}" },
-                    ""
-                ]
-            },
+            "Condition": "CreateRedshiftCondition",
+            "Value": { "Fn::Sub": "jdbc:redshift://${RedshiftInstance.Endpoint.Address}:${RedshiftInstance.Endpoint.Port}/${RedshiftDbName}" },
             "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:RedshiftJdbcUrl" } }
         }
     }
