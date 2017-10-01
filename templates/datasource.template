@@ -175,7 +175,7 @@
             "Type": "Number",
 			"Default": "2"
         },
-        "TalendEmrSecurityGroup": {
+        "EmrSecurityGroup": {
             "Description": "Talend EMR Security Group.",
             "Type": "String"
         },
@@ -416,11 +416,11 @@
                     "Ec2SubnetId": { "Ref": "EmrSubnetA" },
                     "Ec2KeyName": { "Ref": "KeyPair" },
                     "AdditionalMasterSecurityGroups": [
-                        { "Ref": "TalendEmrSecurityGroup" },
+                        { "Ref": "EmrSecurityGroup" },
                         { "Ref": "RemoteAccessEmrSecurityGroup" }
                     ],
                     "AdditionalSlaveSecurityGroups": [
-                        { "Ref": "TalendEmrSecurityGroup" },
+                        { "Ref": "EmrSecurityGroup" },
                         { "Ref": "RemoteAccessEmrSecurityGroup" }
                     ]
                 },
