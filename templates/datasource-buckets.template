@@ -3,9 +3,9 @@
     "Description": "S3 Demo Buckets",
     "Parameters": {
         "CreateEmr": {
-            "Description": "Create EMR.",
+            "Description": "Create EMR log bucket.",
             "Type": "String",
-            "Default": "false",
+            "Default": "true",
             "AllowedValues": [
                 "true",
                 "false"
