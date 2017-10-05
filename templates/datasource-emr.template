@@ -24,22 +24,6 @@
                         "EMRCoreInstanceType",
 						"EMRCoreNodes"
                     ]
-                },
-                {
-                    "Label": {
-                        "default": "Redshift Configurations"
-                    },
-                    "Parameters": [
-                        "CreateRedshift",
-                        "RedshiftSubnetA",
-                        "RedshiftSubnetB",
-                        "RedshiftUsername",
-                        "RedshiftPassword",
-                        "RedshiftDbName",
-                        "RedshiftPort",
-						"RedshiftNodeType",
-						"RedshiftNumberOfNodes"
-                    ]
                 }
             ]
         }
@@ -49,68 +33,6 @@
             "Description": "Key Name for Instance",
             "Type": "AWS::EC2::KeyPair::KeyName",
             "ConstraintDescription": "must be the name of an existing EC2 KeyPair."
-        },
-        "CreateRedshift": {
-            "Description": "Create Redshift.",
-            "Type": "String",
-            "Default": "false",
-            "AllowedValues": [
-                "true",
-                "false"
-            ]
-        },
-        "RedshiftSecurityGroup": {
-            "Description": "Redshift security group",
-            "Type": "String"
-        },
-        "RedshiftSubnetA": {
-            "Description": "Redshift subnet A",
-            "Type": "AWS::EC2::Subnet::Id"
-        },
-        "RedshiftSubnetB": {
-            "Description": "Redshift subnet B",
-            "Type": "AWS::EC2::Subnet::Id"
-        },
-        "RedshiftUsername": {
-            "Description": "RedShift Username",
-            "Type": "String"
-        },
-        "RedshiftPassword": {
-            "Description": "RedShift Password",
-            "NoEcho": true,
-            "Type": "String"
-        },
-        "RedshiftDbName": {
-            "Description": "RedShift Database name",
-            "Type": "String"
-        },
-        "RedshiftPort": {
-            "Description": "RedShift Port",
-            "Type": "String",
-            "Default": "5439"
-        },
-		"RedshiftNodeType": {
-            "AllowedValues": [
-                "dw1.xlarge",
-                "dw1.8xlarge",
-                "dw2.large",
-                "dw2.8xlarge",
-                "dc1.large",
-                "dc1.8xlarge",
-                "ds1.xlarge",
-                "ds1.8xlarge",
-                "ds2.xlarge",
-                "ds2.8xlarge"
-            ],
-            "ConstraintDescription": "must be a valid RedShift node type.",
-            "Default": "dc1.large",
-            "Description": "The node type to for the redshift cluster",
-            "Type": "String"
-        },
-		"RedshiftNumberOfNodes": {
-            "Default": "1",
-            "Description": "The number of nodes in the redshift cluster.",
-            "Type": "Number"
         },
         "CreateEmr": {
             "Description": "Create EMR.",
@@ -184,30 +106,6 @@
     "Mappings": {
     },
     "Conditions": {
-		"IsMultiNodeCluster": {
-            "Fn::Not": [
-                {
-                    "Fn::Equals": [
-                        {
-                            "Ref": "RedshiftNumberOfNodes"
-                        },
-                        "1"
-                    ]
-                }
-            ]
-        },
-        "IsGovCloud": {
-            "Fn::Equals": [
-                { "Ref": "AWS::Region" },
-                "us-gov-west-1"
-            ]
-        },
-        "CreateRedshiftCondition": {
-            "Fn::Equals": [
-                { "Ref": "CreateRedshift" },
-                "true"
-            ]
-        },
         "CreateEmrCondition": {
             "Fn::Equals": [
                 { "Ref": "CreateEmr" },
@@ -216,50 +114,6 @@
         }
     },
     "Resources": {
-        "RedshiftSubnetGroup": {
-            "Type": "AWS::Redshift::ClusterSubnetGroup",
-            "Condition": "CreateRedshiftCondition",
-            "Properties": {
-                "Description": "RedShift Subnet linked to both private database subnets",
-                "SubnetIds": [
-                    { "Ref": "RedshiftSubnetA" },
-                    { "Ref": "RedshiftSubnetB" }
-                ]
-            }
-        },
-        "RedshiftInstance": {
-            "Type": "AWS::Redshift::Cluster",
-            "Condition": "CreateRedshiftCondition",
-            "DependsOn": [ "RedshiftSubnetGroup" ],
-            "Properties": {
-                "ClusterSubnetGroupName": { "Ref": "RedshiftSubnetGroup" },
-                "ClusterType": {
-                    "Fn::If": [
-                        "IsMultiNodeCluster",
-                        "multi-node",
-                        "single-node"
-                    ]
-                },
-                "NodeType": { "Ref": "RedshiftNodeType" },
-				"NumberOfNodes": {
-                    "Fn::If": [
-                        "IsMultiNodeCluster",
-                        {
-                            "Ref": "RedshiftNumberOfNodes"
-                        },
-                        {
-                            "Ref": "AWS::NoValue"
-                        }
-                    ]
-                },
-                "VpcSecurityGroupIds": [ { "Ref": "RedshiftSecurityGroup" } ],
-                "DBName": { "Ref": "RedshiftDbName" },
-                "MasterUsername": { "Ref": "RedshiftUsername" },
-                "MasterUserPassword": { "Ref": "RedshiftPassword" },
-                "Port": { "Ref": "RedshiftPort" },
-                "PubliclyAccessible": false
-            }
-        },
         
         "EmrInstance": {
             "Type": "AWS::EMR::Cluster",
@@ -318,25 +172,15 @@
         }
     },
     "Outputs": {
+        "EmrClusterId": {
+            "Condition": "CreateEmrCondition",
+            "Value": { "Ref": "EmrInstance" },
+            "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:EmrClusterId" } }
+        },
         "EmrMasterPublicDns": {
             "Condition": "CreateEmrCondition",
             "Value": { "Fn::GetAtt": [ "EmrInstance", "MasterPublicDNS" ] },
             "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:EmrMasterPublicDns" } }
-        },
-        "RedshiftEndpoint": {
-            "Condition": "CreateRedshiftCondition",
-            "Value": { "Fn::GetAtt": [ "RedshiftInstance", "Endpoint.Address" ] },
-            "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:RedshiftEndpoint" } }
-        },
-        "RedshiftPort": {
-            "Condition": "CreateRedshiftCondition",
-            "Value": { "Fn::GetAtt": [ "RedshiftInstance", "Endpoint.Port" ] },
-            "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:RedshiftPort" } }
-        },
-        "RedshiftJdbcUrl": {
-            "Condition": "CreateRedshiftCondition",
-            "Value": { "Fn::Sub": "jdbc:redshift://${RedshiftInstance.Endpoint.Address}:${RedshiftInstance.Endpoint.Port}/${RedshiftDbName}" },
-            "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:RedshiftJdbcUrl" } }
         }
     }
 }

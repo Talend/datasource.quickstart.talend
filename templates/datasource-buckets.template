@@ -1,0 +1,120 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "S3 Demo Buckets",
+    "Parameters": {
+    },
+    "Mappings": {
+    },
+    "Conditions": {
+        "IsStandardIA": {
+            "Fn::And": [
+                { "Fn::Equal": [ "us-gov-west-1", { "Ref": "AWS::Region" } ] },
+                { "Fn::Equal": [ "sa-east-1", { "Ref": "AWS::Region" } ] },
+                { "Fn::Equal": [ "ap-southeast-1", { "Ref": "AWS::Region" } ] }
+            ]
+        }
+    },
+    "Resources": {
+        "TalendSourceBucket": {
+            "Type": "AWS::S3::Bucket",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+                "AccessControl": "Private",
+                "LifecycleConfiguration": {
+                    "Rules": [
+                        {
+                            "Id": "Transition90daysRetain7yrs",
+                            "Status": "Enabled",
+                            "ExpirationInDays": 2555,
+                            "Transition": {
+                                "TransitionInDays": 90,
+                                "StorageClass": {
+                                    "Fn::If": [
+                                        "IsStandardIA",
+                                        "STANDARD_IA",
+                                        "GLACIER"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                "VersioningConfiguration": {
+                    "Status": "Enabled"
+                }
+            }
+        },
+        "TalendTargetBucket": {
+            "Type": "AWS::S3::Bucket",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+                "AccessControl": "Private",
+                "LifecycleConfiguration": {
+                    "Rules": [
+                        {
+                            "Id": "Transition90daysRetain7yrs",
+                            "Status": "Enabled",
+                            "ExpirationInDays": 2555,
+                            "Transition": {
+                                "TransitionInDays": 90,
+                                "StorageClass": {
+                                    "Fn::If": [
+                                        "IsStandardIA",
+                                        "STANDARD_IA",
+                                        "GLACIER"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                "VersioningConfiguration": {
+                    "Status": "Enabled"
+                }
+            }
+        },
+        
+        "EmrLogBucket": {
+            "Type": "AWS::S3::Bucket",
+            "Condition": "CreateEmrCondition",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+                "AccessControl": "Private",
+                "LifecycleConfiguration": {
+                    "Rules": [
+                        {
+                            "Id": "Transition90daysRetain7yrs",
+                            "Status": "Enabled",
+                            "ExpirationInDays": 2555,
+                            "Transition": {
+                                "TransitionInDays": 90,
+                                "StorageClass": {
+                                    "Fn::If": [
+                                        "IsStandardIA",
+                                        "STANDARD_IA",
+                                        "GLACIER"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    },
+    "Outputs": {
+        "TalendSourceBucket": {
+            "Value": { "Ref": "TalendSourceBucket" },
+            "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:TalendSourceBucket" } }
+        },
+        "TalendTargetBucket": {
+            "Value": { "Ref": "TalendTargetBucket" },
+            "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:TalendTargetBucket" } }
+        },
+        "EmrLogBucket": {
+            "Condition": "CreateEmrCondition",
+            "Value": { "Fn::GetAtt": [ "EmrLogBucket", "DomainName" ] },
+            "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:EmrLogBucket" } }
+        }
+    }
+}

@@ -19,7 +19,6 @@
                     "Parameters": [
                         "CreateEmr",
                         "EmrSubnetA",
-                        "EmrLogBucket",
 						"EMRMasterInstanceType",
                         "EMRCoreInstanceType",
 						"EMRCoreNodes"
@@ -125,10 +124,6 @@
             "Description": "EMR Subnet A",
             "Type": "AWS::EC2::Subnet::Id"
         },
-        "EmrLogBucket": {
-            "Description": "EMR Log Bucket",
-            "Type": "String"
-        },
 		"EMRMasterInstanceType": {
             "AllowedValues": [
                 "m3.xlarge",
@@ -182,6 +177,83 @@
         }
     },
     "Mappings": {
+        "RegionServiceSupport": {
+            "us-east-1": {
+                "ConfigRules": true,
+                "NatGateway": true,
+                "Glacier": "GLACIER"
+            },
+            "us-east-2": {
+                "ConfigRules": true,
+                "NatGateway": true,
+                "Glacier": "GLACIER"
+            },
+            "us-west-1": {
+                "ConfigRules": true,
+                "NatGateway": true,
+                "Glacier": "GLACIER"
+            },
+            "us-west-2": {
+                "ConfigRules": true,
+                "NatGateway": true,
+                "Glacier": "GLACIER"
+            },
+            "ca-central-1": {
+                "ConfigRules": false,
+                "NatGateway": true,
+                "Glacier": "GLACIER"
+            },
+            "eu-central-1": {
+                "NatGateway": true,
+                "ConfigRules": true,
+                "Glacier": "GLACIER"
+            },
+            "eu-west-1": {
+                "ConfigRules": true,
+                "NatGateway": true,
+                "Glacier": "GLACIER"
+            },
+            "eu-west-2": {
+                "ConfigRules": false,
+                "NatGateway": true,
+                "Glacier": "GLACIER"
+            },
+            "ap-northeast-1": {
+                "ConfigRules": true,
+                "NatGateway": true,
+                "Glacier": "GLACIER"
+            },
+            "ap-northeast-2": {
+                "ConfigRules": true,
+                "NatGateway": true,
+                "Glacier": "GLACIER"
+            },
+            "ap-south-1": {
+                "ConfigRules": false,
+                "NatGateway": true,
+                "Glacier": "GLACIER"
+            },
+            "ap-southeast-1": {
+                "ConfigRules": true,
+                "NatGateway": true,
+                "Glacier": "STANDARD_IA"
+            },
+            "ap-southeast-2": {
+                "ConfigRules": true,
+                "NatGateway": true,
+                "Glacier": "GLACIER"
+            },
+            "sa-east-1": {
+                "ConfigRules": false,
+                "NatGateway": true,
+                "Glacier": "STANDARD_IA"
+            },
+            "us-gov-west-1": {
+                "ConfigRules": false,
+                "NatGateway": false,
+                "Glacier": "STANDARD_IA"
+            }
+        }
     },
     "Conditions": {
 		"IsMultiNodeCluster": {
@@ -216,6 +288,131 @@
         }
     },
     "Resources": {
+        "TalendSourceBucket": {
+            "Type": "AWS::S3::Bucket",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+                "AccessControl": "Private",
+                "LifecycleConfiguration": {
+                    "Rules": [
+                        {
+                            "Id": "Transition90daysRetain7yrs",
+                            "Status": "Enabled",
+                            "ExpirationInDays": 2555,
+                            "Transition": {
+                                "TransitionInDays": 90,
+                                "StorageClass": {
+                                    "Fn::FindInMap": [
+                                        "RegionServiceSupport",
+                                        { "Ref": "AWS::Region" },
+                                        "Glacier"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                "VersioningConfiguration": {
+                    "Status": "Enabled"
+                }
+            }
+        },
+        "TalendTargetBucket": {
+            "Type": "AWS::S3::Bucket",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+                "AccessControl": "Private",
+                "LifecycleConfiguration": {
+                    "Rules": [
+                        {
+                            "Id": "Transition90daysRetain7yrs",
+                            "Status": "Enabled",
+                            "ExpirationInDays": 2555,
+                            "Transition": {
+                                "TransitionInDays": 90,
+                                "StorageClass": {
+                                    "Fn::FindInMap": [
+                                        "RegionServiceSupport",
+                                        { "Ref": "AWS::Region" },
+                                        "Glacier"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                "VersioningConfiguration": {
+                    "Status": "Enabled"
+                }
+            }
+        },
+        "TalendSourceS3Policy": {
+            "Type": "AWS::S3::BucketPolicy",
+            "DependsOn": "TalendSourceBucket",
+            "Properties": {
+                "Bucket": {
+                    "Ref": "TalendSourceBucket"
+                },
+                "PolicyDocument": {
+                    "Statement": [
+                        {
+                            "Sid": "AllowFullAccess",
+                            "Action": "s3:*",
+                            "Effect": "Allow",
+                            "Principal": "*",
+                            "Resource": {
+                                "Fn::Sub": [
+                                    "arn:${Endpoint}:s3:::${TalendSourceBucket}",
+                                    {
+                                        "Endpoint": {
+                                            "Fn::If": [
+                                                "IsGovCloud",
+                                                "aws-us-gov",
+                                                "aws"
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "TalendTargetS3Policy": {
+            "Type": "AWS::S3::BucketPolicy",
+            "DependsOn": "TalendTargetBucket",
+            "Properties": {
+                "Bucket": {
+                    "Ref": "TalendTargetBucket"
+                },
+                "PolicyDocument": {
+                    "Statement": [
+                        {
+                            "Sid": "AllowFullAccess",
+                            "Action": "s3:*",
+                            "Effect": "Allow",
+                            "Principal": "*",
+                            "Resource": {
+                                "Fn::Sub": [
+                                    "arn:${Endpoint}:s3:::${TalendTargetBucket}",
+                                    {
+                                        "Endpoint": {
+                                            "Fn::If": [
+                                                "IsGovCloud",
+                                                "aws-us-gov",
+                                                "aws"
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        
         "RedshiftSubnetGroup": {
             "Type": "AWS::Redshift::ClusterSubnetGroup",
             "Condition": "CreateRedshiftCondition",
@@ -261,6 +458,33 @@
             }
         },
         
+        "EmrLogBucket": {
+            "Type": "AWS::S3::Bucket",
+            "Condition": "CreateEmrCondition",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+                "AccessControl": "Private",
+                "LifecycleConfiguration": {
+                    "Rules": [
+                        {
+                            "Id": "Transition90daysRetain7yrs",
+                            "Status": "Enabled",
+                            "ExpirationInDays": 2555,
+                            "Transition": {
+                                "TransitionInDays": 90,
+                                "StorageClass": {
+                                    "Fn::FindInMap": [
+                                        "RegionServiceSupport",
+                                        { "Ref": "AWS::Region" },
+                                        "Glacier"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        },
         "EmrInstance": {
             "Type": "AWS::EMR::Cluster",
             "Condition": "CreateEmrCondition",
@@ -318,6 +542,19 @@
         }
     },
     "Outputs": {
+        "TalendSourceBucket": {
+            "Value": { "Ref": "TalendSourceBucket" },
+            "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:TalendSourceBucket" } }
+        },
+        "TalendTargetBucket": {
+            "Value": { "Ref": "TalendTargetBucket" },
+            "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:TalendTargetBucket" } }
+        },
+        "EmrLogBucket": {
+            "Condition": "CreateEmrCondition",
+            "Value": { "Fn::GetAtt": [ "EmrLogBucket", "DomainName" ] },
+            "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:EmrLogBucket" } }
+        },
         "EmrMasterPublicDns": {
             "Condition": "CreateEmrCondition",
             "Value": { "Fn::GetAtt": [ "EmrInstance", "MasterPublicDNS" ] },
