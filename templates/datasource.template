@@ -603,11 +603,11 @@
     },
     "Outputs": {
         "TalendSourceBucket": {
-            "Value": { "Fn::GetAtt": [ "TalendSourceBucket", "DomainName" ] },
+            "Value": { "Ref": "TalendSourceBucket" },
             "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:TalendSourceBucket" } }
         },
         "TalendTargetBucket": {
-            "Value": { "Fn::GetAtt": [ "TalendTargetBucket", "DomainName" ] },
+            "Value": { "Ref": "TalendTargetBucket" },
             "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:TalendTargetBucket" } }
         },
         "EmrLogBucket": {
