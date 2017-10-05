@@ -2,6 +2,15 @@
     "AWSTemplateFormatVersion": "2010-09-09",
     "Description": "S3 Demo Buckets",
     "Parameters": {
+        "CreateEmr": {
+            "Description": "Create EMR.",
+            "Type": "String",
+            "Default": "false",
+            "AllowedValues": [
+                "true",
+                "false"
+            ]
+        }
     },
     "Mappings": {
     },
@@ -11,6 +20,12 @@
                 { "Fn::Equals": [ "us-gov-west-1", { "Ref": "AWS::Region" } ] },
                 { "Fn::Equals": [ "sa-east-1", { "Ref": "AWS::Region" } ] },
                 { "Fn::Equals": [ "ap-southeast-1", { "Ref": "AWS::Region" } ] }
+            ]
+        },
+        "CreateEmrCondition": {
+            "Fn::Equals": [
+                { "Ref": "CreateEmr" },
+                "true"
             ]
         }
     },
