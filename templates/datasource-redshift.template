@@ -9,7 +9,6 @@
                         "default": "Redshift Configurations"
                     },
                     "Parameters": [
-                        "CreateRedshift",
                         "RedshiftSubnetA",
                         "RedshiftSubnetB",
                         "RedshiftUsername",
@@ -24,19 +23,6 @@
         }
     },
     "Parameters": {
-        "CreateRedshift": {
-            "Description": "Create Redshift.",
-            "Type": "String",
-            "Default": "false",
-            "AllowedValues": [
-                "true",
-                "false"
-            ]
-        },
-        "RedshiftSecurityGroup": {
-            "Description": "Redshift security group",
-            "Type": "String"
-        },
         "RedshiftSubnetA": {
             "Description": "Redshift subnet A",
             "Type": "AWS::EC2::Subnet::Id"
@@ -44,6 +30,10 @@
         "RedshiftSubnetB": {
             "Description": "Redshift subnet B",
             "Type": "AWS::EC2::Subnet::Id"
+        },
+        "RedshiftSecurityGroup": {
+            "Description": "Redshift security group",
+            "Type": "String"
         },
         "RedshiftUsername": {
             "Description": "RedShift Username",
@@ -94,15 +84,11 @@
             "Fn::Not": [
                 { "Fn::Equals": [ "1", { "Ref": "RedshiftNumberOfNodes" } ] }
             ]
-        },
-        "CreateRedshiftCondition": {
-            "Fn::Equals": [ "true",  { "Ref": "CreateRedshift" } ]
         }
     },
     "Resources": {
         "RedshiftSubnetGroup": {
             "Type": "AWS::Redshift::ClusterSubnetGroup",
-            "Condition": "CreateRedshiftCondition",
             "Properties": {
                 "Description": "RedShift Subnet linked to both private database subnets",
                 "SubnetIds": [
@@ -113,7 +99,6 @@
         },
         "RedshiftInstance": {
             "Type": "AWS::Redshift::Cluster",
-            "Condition": "CreateRedshiftCondition",
             "DependsOn": [ "RedshiftSubnetGroup" ],
             "Properties": {
                 "ClusterSubnetGroupName": { "Ref": "RedshiftSubnetGroup" },
@@ -148,22 +133,18 @@
     },
     "Outputs": {
         "RedshiftClusterId": {
-            "Condition": "CreateRedshiftCondition",
             "Value": { "Ref": "RedshiftInstance" },
             "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:RedshiftClusterId" } }
         },
         "RedshiftEndpoint": {
-            "Condition": "CreateRedshiftCondition",
             "Value": { "Fn::GetAtt": [ "RedshiftInstance", "Endpoint.Address" ] },
             "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:RedshiftEndpoint" } }
         },
         "RedshiftPort": {
-            "Condition": "CreateRedshiftCondition",
             "Value": { "Fn::GetAtt": [ "RedshiftInstance", "Endpoint.Port" ] },
             "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:RedshiftPort" } }
         },
         "RedshiftJdbcUrl": {
-            "Condition": "CreateRedshiftCondition",
             "Value": { "Fn::Sub": "jdbc:redshift://${RedshiftInstance.Endpoint.Address}:${RedshiftInstance.Endpoint.Port}/${RedshiftDbName}" },
             "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:RedshiftJdbcUrl" } }
         }
