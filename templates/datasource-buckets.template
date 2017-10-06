@@ -55,7 +55,7 @@
                     ]
                 },
                 "VersioningConfiguration": {
-                    "Status": "Enabled"
+                    "Status": "Suspended"
                 }
             }
         },
@@ -84,7 +84,7 @@
                     ]
                 },
                 "VersioningConfiguration": {
-                    "Status": "Enabled"
+                    "Status": "Suspended"
                 }
             }
         },
