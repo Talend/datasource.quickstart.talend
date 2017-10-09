@@ -77,9 +77,9 @@
             "Properties": {
                 "GroupDescription": "Enable EMR remote access",
                 "VpcId": { "Ref": "VpcId" },
-                "SecurityGroupEgress": [
+                "SecurityGroupIngress": [
                     {
-                        "IpProtocol": "-1",
+                        "IpProtocol": "tcp",
                         "FromPort": "0",
                         "ToPort": "65535",
                         "CidrIp": { "Ref": "RemoteAccessCIDR" }
