@@ -41,18 +41,6 @@
     "Mappings": {
     },
     "Conditions": {
-        "CreateRedshiftCondition": {
-            "Fn::Equals": [
-                { "Ref": "CreateRedshift" },
-                "true"
-            ]
-        },
-        "CreateEmrCondition": {
-            "Fn::Equals": [
-                { "Ref": "CreateEmr" },
-                "true"
-            ]
-        }
     },
     "Resources": {
         "RedshiftSecurityGroup": {

@@ -16,7 +16,7 @@
     },
     "Conditions": {
         "IsStandardIA": {
-            "Fn::And": [
+            "Fn::Or": [
                 { "Fn::Equals": [ "us-gov-west-1", { "Ref": "AWS::Region" } ] },
                 { "Fn::Equals": [ "sa-east-1", { "Ref": "AWS::Region" } ] },
                 { "Fn::Equals": [ "ap-southeast-1", { "Ref": "AWS::Region" } ] }
