@@ -39,7 +39,7 @@
                     "Rules": [
                         {
                             "Id": "Transition90daysRetain7yrs",
-                            "Status": "Enabled",
+                            "Status": "Disabled",
                             "ExpirationInDays": 2555,
                             "Transition": {
                                 "TransitionInDays": 90,
@@ -68,7 +68,7 @@
                     "Rules": [
                         {
                             "Id": "Transition90daysRetain7yrs",
-                            "Status": "Enabled",
+                            "Status": "Disabled",
                             "ExpirationInDays": 2555,
                             "Transition": {
                                 "TransitionInDays": 90,
