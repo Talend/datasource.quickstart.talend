@@ -32,14 +32,13 @@
     "Resources": {
         "TalendSourceBucket": {
             "Type": "AWS::S3::Bucket",
-            "DeletionPolicy": "Retain",
             "Properties": {
                 "AccessControl": "Private",
                 "LifecycleConfiguration": {
                     "Rules": [
                         {
                             "Id": "Transition90daysRetain7yrs",
-                            "Status": "Disabled",
+                            "Status": "Enabled",
                             "ExpirationInDays": 2555,
                             "Transition": {
                                 "TransitionInDays": 90,
@@ -53,22 +52,18 @@
                             }
                         }
                     ]
-                },
-                "VersioningConfiguration": {
-                    "Status": "Suspended"
                 }
             }
         },
         "TalendTargetBucket": {
             "Type": "AWS::S3::Bucket",
-            "DeletionPolicy": "Retain",
             "Properties": {
                 "AccessControl": "Private",
                 "LifecycleConfiguration": {
                     "Rules": [
                         {
                             "Id": "Transition90daysRetain7yrs",
-                            "Status": "Disabled",
+                            "Status": "Enabled",
                             "ExpirationInDays": 2555,
                             "Transition": {
                                 "TransitionInDays": 90,
@@ -82,9 +77,6 @@
                             }
                         }
                     ]
-                },
-                "VersioningConfiguration": {
-                    "Status": "Suspended"
                 }
             }
         },
@@ -92,7 +84,6 @@
         "EmrLogBucket": {
             "Type": "AWS::S3::Bucket",
             "Condition": "CreateEmrCondition",
-            "DeletionPolicy": "Retain",
             "Properties": {
                 "AccessControl": "Private",
                 "LifecycleConfiguration": {
@@ -130,6 +121,11 @@
             "Condition": "CreateEmrCondition",
             "Value": { "Fn::GetAtt": [ "EmrLogBucket", "DomainName" ] },
             "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:EmrLogBucket" } }
+        },
+        "EmrLogBucket2": {
+            "Condition": "CreateEmrCondition",
+            "Value": { "Ref": "EmrLogBucket" },
+            "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:EmrLogBucket2" } }
         }
     }
 }
