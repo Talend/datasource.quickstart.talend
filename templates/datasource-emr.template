@@ -18,7 +18,7 @@
                     },
                     "Parameters": [
                         "EmrSubnetA",
-                        "EmrLogBucket",
+                        "EmrLogBucketDnsName",
 						"EmrMasterInstanceType",
                         "EmrCoreInstanceType",
 						"EmrCoreNodes"
@@ -37,8 +37,8 @@
             "Description": "EMR Subnet A",
             "Type": "AWS::EC2::Subnet::Id"
         },
-        "EmrLogBucket": {
-            "Description": "EMR Log Bucket",
+        "EmrLogBucketDnsName": {
+            "Description": "EMR Log Bucket DNS name",
             "Type": "String"
         },
 		"EmrMasterInstanceType": {
@@ -119,6 +119,18 @@
         "RemoteAccessEmrSecurityGroup": {
             "Description": "Remote access EMR Security Group.",
             "Type": "String"
+        },
+        "EmrMasterSecurityGroup": {
+            "Description": "EMR Naster Security Group.",
+            "Type": "String"
+        },		
+        "EmrSlaveSecurityGroup": {
+            "Description": "EMR Slave Security Group.",
+            "Type": "String"
+        },
+        "EmrServiceAccessSecurityGroup": {
+            "Description": "EMR Service Access Security Group.",
+            "Type": "String"
         }
     },
     "Mappings": {
@@ -146,6 +158,9 @@
                     "TerminationProtected": false,
                     "Ec2SubnetId": { "Ref": "EmrSubnetA" },
                     "Ec2KeyName": { "Ref": "KeyPair" },
+					"EmrManagedMasterSecurityGroup": { "Ref":"EmrMasterSecurityGroup" },
+					"EmrManagedSlaveSecurityGroup": { "Ref":"EmrSlaveSecurityGroup" },
+					"ServiceAccessSecurityGroup": { "Ref":"EmrServiceAccessSecurityGroup" },
                     "AdditionalMasterSecurityGroups": [
                         { "Ref": "EmrSecurityGroup" },
                         { "Ref": "RemoteAccessEmrSecurityGroup" }
@@ -165,7 +180,7 @@
 					{ "Name": "ZooKeeper" },
                     { "Name": "Spark" }
                 ],
-                "LogUri": { "Fn::Sub": "s3://${EmrLogBucket}" },
+                "LogUri": { "Fn::Sub": "s3://${EmrLogBucketDnsName}" },
                 "ReleaseLabel": "emr-5.0.0",
                 "Name": "EmrInstance",
                 "JobFlowRole": "EMR_EC2_DefaultRole",

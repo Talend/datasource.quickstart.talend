@@ -32,7 +32,6 @@
     "Resources": {
         "TalendSourceBucket": {
             "Type": "AWS::S3::Bucket",
-            "DeletionPolicy": "Retain",
             "Properties": {
                 "AccessControl": "Private",
                 "LifecycleConfiguration": {
@@ -61,7 +60,6 @@
         },
         "TalendTargetBucket": {
             "Type": "AWS::S3::Bucket",
-            "DeletionPolicy": "Retain",
             "Properties": {
                 "AccessControl": "Private",
                 "LifecycleConfiguration": {
@@ -82,9 +80,6 @@
                             }
                         }
                     ]
-                },
-                "VersioningConfiguration": {
-                    "Status": "Suspended"
                 }
             }
         },
@@ -92,7 +87,6 @@
         "EmrLogBucket": {
             "Type": "AWS::S3::Bucket",
             "Condition": "CreateEmrCondition",
-            "DeletionPolicy": "Retain",
             "Properties": {
                 "AccessControl": "Private",
                 "LifecycleConfiguration": {
@@ -128,8 +122,13 @@
         },
         "EmrLogBucket": {
             "Condition": "CreateEmrCondition",
-            "Value": { "Fn::GetAtt": [ "EmrLogBucket", "DomainName" ] },
+            "Value": { "Ref": "EmrLogBucket" },
             "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:EmrLogBucket" } }
+        },
+        "EmrLogBucketDnsName": {
+            "Condition": "CreateEmrCondition",
+            "Value": { "Fn::GetAtt": [ "EmrLogBucket", "DomainName" ] },
+            "Export": { "Name": { "Fn::Sub": "${AWS::StackName}:EmrLogBucketDnsName" } }
         }
     }
 }
